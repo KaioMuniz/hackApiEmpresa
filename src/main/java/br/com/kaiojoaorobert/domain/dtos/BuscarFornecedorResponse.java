@@ -13,6 +13,7 @@ public class BuscarFornecedorResponse {
 	private String cnpj;
 	private String telefone;
 	private EnderecoResponse endereco;
+	private UUID usuarioId;
 	private List<String> contatos;
 
 }

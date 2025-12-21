@@ -20,6 +20,7 @@ import br.com.kaiojoaorobert.domain.dtos.CadastrarCotacaoRequest;
 import br.com.kaiojoaorobert.domain.dtos.CadastrarCotacaoResponse;
 import br.com.kaiojoaorobert.domain.dtos.EditarCotacaoRequest;
 import br.com.kaiojoaorobert.domain.dtos.EditarCotacaoResponse;
+import br.com.kaiojoaorobert.domain.dtos.EncerrarCotacaoRequest;
 import br.com.kaiojoaorobert.domain.dtos.PropostaRequest;
 import br.com.kaiojoaorobert.domain.dtos.PropostaResponse;
 import br.com.kaiojoaorobert.domain.services.CotacaoServiceImpl;
@@ -50,6 +51,11 @@ public class CotacaoController {
     public ResponseEntity<EditarCotacaoResponse> editCotacao(@PathVariable UUID id,@RequestBody EditarCotacaoRequest request, HttpServletRequest http) {
     	
     		return ResponseEntity.ok(service.editarCotacao(id, request, getUsuarioId(http)));
+    }
+    
+    @PutMapping("encerrar/{id}")
+    public ResponseEntity<String> encerrarCotacao(@PathVariable UUID id, @RequestBody EncerrarCotacaoRequest request, HttpServletRequest http) {
+    		return ResponseEntity.ok(service.encerrarCotacao(id, request, getUsuarioId(http)));
     }
     
     @PostMapping("/negociar/{id}")

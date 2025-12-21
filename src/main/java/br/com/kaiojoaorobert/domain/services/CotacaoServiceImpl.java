@@ -10,12 +10,15 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.kaiojoaorobert.application.components.RabbitMQProducerComponent;
 import br.com.kaiojoaorobert.domain.dtos.BuscarCotacaoResponse;
 import br.com.kaiojoaorobert.domain.dtos.BuscarFornecedorResponse;
 import br.com.kaiojoaorobert.domain.dtos.CadastrarCotacaoRequest;
 import br.com.kaiojoaorobert.domain.dtos.CadastrarCotacaoResponse;
+import br.com.kaiojoaorobert.domain.dtos.CotacaoMessage;
 import br.com.kaiojoaorobert.domain.dtos.EditarCotacaoRequest;
 import br.com.kaiojoaorobert.domain.dtos.EditarCotacaoResponse;
+import br.com.kaiojoaorobert.domain.dtos.EncerrarCotacaoRequest;
 import br.com.kaiojoaorobert.domain.dtos.EnderecoResponse;
 import br.com.kaiojoaorobert.domain.dtos.PropostaRequest;
 import br.com.kaiojoaorobert.domain.dtos.PropostaResponse;
@@ -27,7 +30,9 @@ import br.com.kaiojoaorobert.domain.exceptions.CotacaoNaoEncontradaException;
 import br.com.kaiojoaorobert.domain.exceptions.EmpresaNaoEncontradaException;
 import br.com.kaiojoaorobert.repositories.CotacaoRepository;
 import br.com.kaiojoaorobert.repositories.EmpresaRepository;
+import br.com.kaiojoaorobert.repositories.FornecedorRepository;
 import br.com.kaiojoaorobert.repositories.PropostaRepository;
+import br.com.kaiojoaorobert.repositories.UsuarioRepository;
 
 @Service
 public class CotacaoServiceImpl {
@@ -35,6 +40,9 @@ public class CotacaoServiceImpl {
 	@Autowired CotacaoRepository cotacaoRepository;
 	@Autowired PropostaRepository propostaRepository;
 	@Autowired EmpresaRepository empresaRepository;
+	@Autowired FornecedorRepository fornecedorRepository;
+	@Autowired UsuarioRepository usuarioRepository;
+	@Autowired RabbitMQProducerComponent producer;
 	
 	public CadastrarCotacaoResponse cadastrarCotacao(CadastrarCotacaoRequest request, UUID usuarioId) {
 		
@@ -163,13 +171,14 @@ public class CotacaoServiceImpl {
 		resp.setEndereco(enderecoResp);
 		resp.setId(fornecedor.getId());
 		resp.setNome(fornecedor.getNome());
+		resp.setUsuarioId(fornecedor.getUsuarioId());
 		resp.setTelefone(fornecedor.getTelefone());
 		
 		return resp;
 	}
 	
 	
-	public String encerrarCotacao(UUID id, UUID usuarioId) {
+	public String encerrarCotacao(UUID id,EncerrarCotacaoRequest request, UUID usuarioId) {
 		
 		var cotacao = cotacaoRepository.findById(id).orElseThrow(() -> new CotacaoNaoEncontradaException());
 		
@@ -177,8 +186,22 @@ public class CotacaoServiceImpl {
 			throw new CotacaoNaoEncontradaException();
 		}
 		
+		var fornecedor = fornecedorRepository.findById(request.getVencedorId()).orElseThrow(() -> new RuntimeException("Fornecedor não encontrado."));
+		var emailFornecedor = usuarioRepository.findById(fornecedor.getUsuarioId()).orElseThrow(() -> new RuntimeException());
+		
+		
 		cotacao.setStatus(StatusCotacao.ENCERRADA);
+		cotacao.setVencedorId(request.getVencedorId());
 		cotacaoRepository.save(cotacao);
+		
+		var message = new CotacaoMessage();
+		message.setEmailEmpresa(cotacao.getEmpresa().getEmail());
+		message.setEmailFornecedor(emailFornecedor.getEmail());
+		
+		producer.send(message);
+		
+		
+		
 		
 		return "Cotação encerrada.";
 	}
