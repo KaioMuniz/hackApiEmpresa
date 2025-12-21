@@ -1,16 +1,15 @@
 package br.com.kaiojoaorobert.configuration;
 
-import org.springframework.amqp.core.Queue;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Configuration
-public class RabbitMQConfiguration {
+public class ObjectMapperConfig {
 
 	@Bean
-	public Queue queue() {
-		return new Queue("cotacoes_encerradas", true);
+	public ObjectMapper mapper() {
+	return new ObjectMapper();
 	}
-	
-	
 }

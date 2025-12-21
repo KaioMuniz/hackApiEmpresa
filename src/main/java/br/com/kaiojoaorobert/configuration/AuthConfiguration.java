@@ -1,6 +1,7 @@
 package br.com.kaiojoaorobert.configuration;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -9,19 +10,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AuthConfiguration {
 
-	@Value("${jwt.secretkey}")
-	private String jwtSecretkey;
+	@Value("${jwt.secret}")
+	private String secret;
+	
+	@Autowired AuthenticationFilter authenticationFilter;
 
 	@Bean
-	FilterRegistrationBean<AuthenticationFilter> authenticationFilter() {
-
-		FilterRegistrationBean<AuthenticationFilter> registration = new FilterRegistrationBean<>();
-
-		registration.setFilter(new AuthenticationFilter(jwtSecretkey));
-
-		registration.addUrlPatterns("/api/*");
-
-		return registration;
+	FilterRegistrationBean<AuthenticationFilter> registrationFilter() {
+		
+		var filter = new FilterRegistrationBean<AuthenticationFilter>();
+		filter.setFilter(authenticationFilter);
+		
+		filter.addUrlPatterns("/api/*");
+		
+		return filter;
 	}
-
 }

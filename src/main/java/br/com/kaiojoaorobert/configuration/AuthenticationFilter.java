@@ -1,6 +1,8 @@
 package br.com.kaiojoaorobert.configuration;
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
 
 import io.jsonwebtoken.Claims;
@@ -12,42 +14,48 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Component
 public class AuthenticationFilter extends GenericFilterBean {
 
-	private final String secretKey;
-
-	public AuthenticationFilter(String secretKey) {
-		this.secretKey = secretKey;
-	}
-
+	@Value("${jwt.secret}")
+	private String secret;
+	
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
 			throws IOException, ServletException {
-
 		final HttpServletRequest request = (HttpServletRequest) servletRequest;
 		final HttpServletResponse response = (HttpServletResponse) servletResponse;
-
-		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+		
+		if("OPTIONS".equalsIgnoreCase(request.getMethod())) {
 			response.setStatus(HttpServletResponse.SC_OK);
 			filterChain.doFilter(request, response);
 			return;
 		}
-
+		
 		final String authHeader = request.getHeader("Authorization");
-
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Acesso não autorizado.");
+		
+		if(authHeader == null || !authHeader.startsWith("Bearer ")) {
+			
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido ou inexistente");
+			
 			return;
 		}
-
+		
 		try {
+			
 			final String token = authHeader.substring(7);
-			Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
-
-			request.setAttribute("claims", claims);
+			
+			Claims claims = Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+			
+			request.setAttribute("claim", claims);
+			
 			filterChain.doFilter(request, response);
-		} catch (Exception e) {
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido ou expirado.");
+		
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido ou expirado");
 		}
+	
 	}
 }

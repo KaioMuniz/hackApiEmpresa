@@ -17,6 +17,8 @@ import br.com.kaiojoaorobert.domain.dtos.CadastrarCotacaoResponse;
 import br.com.kaiojoaorobert.domain.dtos.EditarCotacaoRequest;
 import br.com.kaiojoaorobert.domain.dtos.EditarCotacaoResponse;
 import br.com.kaiojoaorobert.domain.dtos.EnderecoResponse;
+import br.com.kaiojoaorobert.domain.dtos.PropostaRequest;
+import br.com.kaiojoaorobert.domain.dtos.PropostaResponse;
 import br.com.kaiojoaorobert.domain.entities.Cotacao;
 import br.com.kaiojoaorobert.domain.entities.Fornecedor;
 import br.com.kaiojoaorobert.domain.entities.Proposta;
@@ -25,11 +27,13 @@ import br.com.kaiojoaorobert.domain.exceptions.CotacaoNaoEncontradaException;
 import br.com.kaiojoaorobert.domain.exceptions.EmpresaNaoEncontradaException;
 import br.com.kaiojoaorobert.repositories.CotacaoRepository;
 import br.com.kaiojoaorobert.repositories.EmpresaRepository;
+import br.com.kaiojoaorobert.repositories.PropostaRepository;
 
 @Service
 public class CotacaoServiceImpl {
 
 	@Autowired CotacaoRepository cotacaoRepository;
+	@Autowired PropostaRepository propostaRepository;
 	@Autowired EmpresaRepository empresaRepository;
 	
 	public CadastrarCotacaoResponse cadastrarCotacao(CadastrarCotacaoRequest request, UUID usuarioId) {
@@ -51,6 +55,7 @@ public class CotacaoServiceImpl {
 		cotacao.setFornecedores(List.of());
 		cotacao.setPropostas(List.of());
 		cotacao.setStatus(StatusCotacao.valueOf(request.getStatus()));
+		cotacao.setEmpresa(empresa);
 		
 		cotacaoRepository.save(cotacao);
 		
@@ -176,5 +181,36 @@ public class CotacaoServiceImpl {
 		cotacaoRepository.save(cotacao);
 		
 		return "Cotação encerrada.";
+	}
+	
+	public PropostaResponse negociarCotacao(UUID id,PropostaRequest request, UUID usuarioId) {
+		
+		var cotacao = cotacaoRepository.findById(id).orElseThrow(() -> new CotacaoNaoEncontradaException());
+		
+		if(cotacao.getEmpresa().getId().equals(usuarioId)) {
+			throw new CotacaoNaoEncontradaException();
+		}
+		
+		if(cotacao.getPropostas().size() < 1) {
+			throw new RuntimeException("Não há propostas para negociar");
+		}
+		
+		var proposta = new Proposta();
+		proposta.setCotacao(cotacao);
+		proposta.setTexto(request.getTexto());
+		proposta.setUsuarioId(usuarioId);
+		
+		propostaRepository.save(proposta);
+		
+		cotacao.getPropostas().add(proposta);
+		
+		cotacaoRepository.save(cotacao);
+		
+		var resp = new PropostaResponse();
+		resp.setId(proposta.getId());
+		resp.setIdCotacao(cotacao.getId());
+		resp.setTexto(proposta.getTexto());
+		
+		return resp;
 	}
 }
