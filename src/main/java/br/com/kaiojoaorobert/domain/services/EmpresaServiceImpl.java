@@ -8,15 +8,27 @@ import org.springframework.stereotype.Service;
 
 import br.com.kaiojoaorobert.domain.dtos.CadastrarEmpresaRequest;
 import br.com.kaiojoaorobert.domain.dtos.CadastrarEmpresaResponse;
+import br.com.kaiojoaorobert.domain.dtos.CotacaoMessage;
+import br.com.kaiojoaorobert.domain.dtos.SolicitarFornecedorRequest;
 import br.com.kaiojoaorobert.domain.entities.Empresa;
 import br.com.kaiojoaorobert.domain.entities.Endereco;
+import br.com.kaiojoaorobert.domain.entities.Proposta;
+import br.com.kaiojoaorobert.domain.entities.StatusCotacao;
 import br.com.kaiojoaorobert.domain.exceptions.EmpresaJaCadastradaException;
+import br.com.kaiojoaorobert.repositories.CotacaoRepository;
 import br.com.kaiojoaorobert.repositories.EmpresaRepository;
+import br.com.kaiojoaorobert.repositories.FornecedorRepository;
+import br.com.kaiojoaorobert.repositories.PropostaRepository;
+import br.com.kaiojoaorobert.repositories.UsuarioRepository;
 
 @Service
 public class EmpresaServiceImpl {
 
 	@Autowired EmpresaRepository empresaRepository;
+	@Autowired FornecedorRepository fornecedorRepository;
+	@Autowired CotacaoRepository cotacaoRepository;
+	@Autowired PropostaRepository propostaRepository;
+	@Autowired UsuarioRepository usuarioRepository;
 	
 	public CadastrarEmpresaResponse cadastrarEmpresa(CadastrarEmpresaRequest request, UUID usuarioId) {
 		
@@ -53,5 +65,36 @@ public class EmpresaServiceImpl {
 		
 		resp.setIdEmpresa(empresa.getId());
 		return resp;
+	}
+	
+	public String solicitarFornecedor(UUID idFornecedor, SolicitarFornecedorRequest request, UUID usuarioId) {
+		var empresa = empresaRepository.findByUsuarioId(usuarioId).orElseThrow(() -> new RuntimeException("Empresa nao encontrada."));
+		var cotacao = cotacaoRepository.findById(request.getCotacaoId()).orElseThrow(() -> new RuntimeException());
+		var fornecedor = fornecedorRepository.findById(idFornecedor).orElseThrow(() -> new RuntimeException("Fornecedor não encontrado"));
+		
+		if(!empresa.getCotacoes().contains(cotacao)) {
+			throw new RuntimeException();
+		}
+		if(cotacao.getStatus().equals(StatusCotacao.CANCELADA) || cotacao.getStatus().equals(StatusCotacao.ENCERRADA)) {
+			throw new RuntimeException();
+		}
+		
+		var emailFornecedor = usuarioRepository.findById(fornecedor.getUsuarioId()).orElseThrow(() -> new RuntimeException());
+		
+		
+		var proposta = new Proposta();
+		proposta.setTexto(request.getTexto());
+		proposta.setCotacao(cotacao);
+		proposta.setUsuarioId(usuarioId);
+		proposta.setFornecedor(fornecedor);
+		
+		propostaRepository.save(proposta);
+		
+		var message = new CotacaoMessage();
+		message.setIdCotacao(cotacao.getId());
+		message.setEmailEmpresa(empresa.getEmail());
+		message.setEmailFornecedor(emailFornecedor.getEmail());
+		
+		return "Fornecedor solicitado";
 	}
 }

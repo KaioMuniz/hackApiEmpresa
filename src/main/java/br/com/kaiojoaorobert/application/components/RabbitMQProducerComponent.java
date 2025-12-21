@@ -26,4 +26,16 @@ public class RabbitMQProducerComponent {
 			ex.printStackTrace();
 		}
 	}
+	
+	public void sendConvite(CotacaoMessage message) {
+		try {
+			
+			String json = mapper.writeValueAsString(message);
+			rabbitTemplate.convertAndSend("convites_fornecedores",json);
+			
+		}
+		catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
 }

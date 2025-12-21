@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.kaiojoaorobert.configuration.JwtComponent;
 import br.com.kaiojoaorobert.domain.dtos.CadastrarEmpresaRequest;
 import br.com.kaiojoaorobert.domain.dtos.CadastrarEmpresaResponse;
+import br.com.kaiojoaorobert.domain.dtos.SolicitarFornecedorRequest;
 import br.com.kaiojoaorobert.domain.services.EmpresaServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -29,10 +31,17 @@ public class EmpresaController {
 		return ResponseEntity.ok(service.cadastrarEmpresa(request, getUsuarioId(http)));
 	}
 	
+	@PostMapping("solicitar/fornecedor/{id}")
+	public ResponseEntity<String> convidarFornecedor(@PathVariable UUID id,@RequestBody SolicitarFornecedorRequest request, HttpServletRequest http ) {
+		return ResponseEntity.ok(service.solicitarFornecedor(id, request, getUsuarioId(http)));
+	}
+	
 	private UUID getUsuarioId(HttpServletRequest request) {
 		
 		var token = request.getHeader("Authorization").replace("Bearer ", "");
 		
 		return jwt.getIdFromToken(token);
 	}
+	
+	
 }
