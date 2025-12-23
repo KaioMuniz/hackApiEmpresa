@@ -9,7 +9,6 @@
 - **Robert Porteles**
 
 ---
-
 ## Estrutura da Solução (Repositórios)
 
 Nossa solução foi dividida em **4 projetos independentes e integrados**, atendendo a todos os requisitos do desafio:
@@ -26,11 +25,9 @@ Nossa solução foi dividida em **4 projetos independentes e integrados**, atend
   Backend para o **backoffice** da empresa contratante (**gestão e cotações**).  
   https://github.com/KaioMuniz/hackApiEmpresa
 
-- **Interface / Portal do Fornecedor**  
-  **Interface front-end** dedicada à experiência do fornecedor.  
+- **FRONT WEB MULTI-PERFIL**  
+  O front-end é composto por **dois** **dashboards** **distintos**: um destinado à **empresa** e outro ao **fornecedor**. Abaixo, apresento o **fluxograma** detalhado com o mapeamento de todas as telas.
   https://github.com/RobertPorteles/fornecedorHackatom
-
-
 
 
 ---
